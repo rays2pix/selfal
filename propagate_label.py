@@ -11,7 +11,8 @@ def getrectfrommask(mask):
 
 
 
-
+''' try out different algorithms following this parameter signature..
+    the algorithm is expected to return a numpy array of the label'''
 def algo_gmm(previmage,objmask,nextimage):
     rows = previmage.shape[0]
     cols = previmage.shape[1]
@@ -41,3 +42,4 @@ def algo_gmm(previmage,objmask,nextimage):
     rgb_np[np.where(r_mask)]=[0,255,0]
     data = rgb_np
     rescaled =  (255.0 / data.max() * (data - data.min())).astype(np.uint8)
+    return r_mask
