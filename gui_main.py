@@ -4,12 +4,11 @@ from PIL import Image
 import numpy as np
 import cv2
 from dataset import Dataset
+import  propagate_label 
 
-
-def propagate_label(previmage,objmask,nextimage):
+def propagate_label_gmm(previmage,objmask,nextimage):
     rows = previmage.shape[0]
     cols = previmage.shape[1]
-    
     gmm_mask = np.ones((rows,cols),np.uint8)
     gmm_mask = gmm_mask * 0
     print np.sum(gmm_mask)
@@ -17,28 +16,27 @@ def propagate_label(previmage,objmask,nextimage):
     sure_fg = np.random.randint((objmask[0].shape[0]),size=100)
     for x in np.nditer(sure_fg):
         gmm_mask[objmask[0][x],objmask[1][x]] = 1
-        bgdModel = np.zeros((1,65),np.float64)
-        fgdModel = np.zeros((1,65),np.float64)
-        img = nextimage
-        print type(img[0][0])
-        r_mask, bgdModel, fgdModel     =              cv2.grabCut(img,gmm_mask,None,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
-
-
-        print sure_fg
-        print np.sum(gmm_mask)
-        print r_mask.shape
-        print objmask[1].shape
-        print img.shape,r_mask.shape
-        l_img =   img* r_mask[:,:,np.newaxis]
-        cv2.imwrite('gmmm.png',l_img)
-        rgb_np = np.zeros((self.gtframe.width,self.gtframe.height,3))
-        rgb_np[np.where(r_mask)]=[0,255,0]
-        data = rgb_np
-        rescaled =  (255.0 / data.max() * (data - data.min())).astype(np.uint8)
-        rgb_image = Image.fromarray(rescaled)
-        #ov=self.gtframe.overlay_label_on_image(Image.open('nextframe.png'),rgb_image)
-        #ov.save('overlayed.png')
-
+    bgdModel = np.zeros((1,65),np.float64)
+    fgdModel = np.zeros((1,65),np.float64)
+    img = nextimage
+    print type(img[0][0])
+    tmp_mask = np.zeros((rows,cols),np.uint8)
+    m1,m2 = np.where(gmm_mask==1)
+    r_mask, bgdModel, fgdModel     =  cv2.grabCut(img,gmm_mask,None,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
+    r_mask, bgdModel, fgdModel     =  cv2.grabCut(img,tmp_mask,(0,199,120,120),bgdModel,fgdModel,5,cv2.GC_INIT_WITH_RECT| cv2.GC_INIT_WITH_MASK)
+    print sure_fg
+    print np.sum(gmm_mask)
+    print r_mask.shape
+    print objmask[1].shape
+    print img.shape,r_mask.shape
+    l_img =   img* r_mask[:,:,np.newaxis]
+    cv2.imwrite('gmmm.png',l_img)
+    rgb_np = np.zeros((self.gtframe.width,self.gtframe.height,3))
+    rgb_np[np.where(r_mask)]=[0,255,0]
+    data = rgb_np
+    rescaled =  (255.0 / data.max() * (data - data.min())).astype(np.uint8)
+    rgb_image = Image.fromarray(rescaled)
+    return rgb_image
 
 
 
@@ -85,7 +83,9 @@ class Labeller(wx.App):
 
  
     def onPropagate(self,event):
-        propagated_label = propagate_label(self.current_frame,self.mask,self.next_frame)      
+        '''The workhorse function to experiement with. Replace propagate_label with propagate_label_xxx 
+            where xxx is your experiment. '''
+        propagated_label = propagate_label.algo_gmm(self.current_frame,self.mask,self.next_frame)      
 
  
     def onComboSelect(self,event):
@@ -114,7 +114,8 @@ class Labeller(wx.App):
  
 
         #Browse button to select directory
-        browseBtn = wx.Button(self.panel, label='Browse')
+        #Currently the directories are hard-coded in dataset class
+        browseBtn = wx.Button(self.panel, label='Load')
         browseBtn.Bind(wx.EVT_BUTTON, self.onBrowse)
         
         #Propagate button to invoke labelling algorithm
