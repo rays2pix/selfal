@@ -11,7 +11,7 @@ def propagate_label_gmm(previmage,objmask,nextimage):
     cols = previmage.shape[1]
     gmm_mask = np.ones((rows,cols),np.uint8)
     gmm_mask = gmm_mask * 0
-    print np.sum(gmm_mask)
+	#print np.sum(gmm_mask)
     gmm_mask[objmask[0],objmask[1]] = 3
     sure_fg = np.random.randint((objmask[0].shape[0]),size=100)
     for x in np.nditer(sure_fg):
