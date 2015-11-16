@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from sklearn.mixture import GMM
 
 def getrectfrommask(mask):
     row_start = np.min(mask[0])
@@ -11,9 +12,39 @@ def getrectfrommask(mask):
 
 
 
+
+def algo_gmm(previmage,objmask,nextimage):
+    ''' 1. form a mixture model using obj pixels
+        2. Classify every pixel in nextimage
+        3. Threshold it and classify'''
+    import sklearn
+    rows = previmage.shape[0]
+    cols = previmage.shape[1]
+    print previmage.shape
+    objpixels = previmage[objmask]
+    bgpix = np.ones((rows,cols))
+    bgpix[objmask]=0
+    bgmask = np.where(bgpix==1)
+    bgpixels = previmage[bgmask]
+    print objpixels.shape
+    obj_gmm_model = GMM(n_components=3)
+    obj_gmm_model.fit(objpixels)
+    bg_gmm_model = GMM(n_components=3)
+    #bg_gmm_model.fit(bgpixels)
+    print obj_gmm_model.means_
+    next_ = nextimage.reshape((rows*cols,3))
+    print next_.shape
+    nextlabels_obj = obj_gmm_model.predict_proba(next_)
+    #nextlabels_bg = bg_gmm_model.predict_proba(next_)
+    nextlabels_obj = nextlabels_obj.reshape(rows,cols,3) 
+    nextlabels = obj_gmm_model.predict(next_)    
+    print nextlabels_obj.shape
+    return nextlabels_obj
+
+
 ''' try out different algorithms following this parameter signature..
     the algorithm is expected to return a numpy array of the label'''
-def algo_gmm(previmage,objmask,nextimage):
+def algo_grabcut(previmage,objmask,nextimage):
     rows = previmage.shape[0]
     cols = previmage.shape[1]
     gmm_mask = np.ones((rows,cols),np.uint8)
@@ -42,4 +73,16 @@ def algo_gmm(previmage,objmask,nextimage):
     rgb_np[np.where(r_mask)]=[0,255,0]
     data = rgb_np
     rescaled =  (255.0 / data.max() * (data - data.min())).astype(np.uint8)
-    return r_mask
+    return rescaled
+
+
+def test_algo_gmm():
+    samples = np.random.randint(0,250,(5,5))
+    next_samples = np.random.randint(0,250,(5,5))
+    mask = np.where((samples >50) & (samples <150) ) 
+    print next_samples
+    algo_gmm(samples,mask,next_samples)
+
+
+if __name__ == "__main__":
+    test_algo_gmm()

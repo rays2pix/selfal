@@ -86,7 +86,7 @@ class Labeller(wx.App):
         '''The workhorse function to experiement with. Replace propagate_label with propagate_label_xxx 
             where xxx is your experiment. '''
         propagated_label = propagate_label.algo_gmm(self.current_frame,self.mask,self.next_frame)      
-
+        cv2.imwrite('pimage.png',propagated_label)
  
     def onComboSelect(self,event):
         self.selected_obj =  event.GetString()

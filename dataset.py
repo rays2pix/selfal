@@ -12,7 +12,7 @@ class Frame:
 
 
 class Dataset:
-    def __init__(self,images_dir=None,labels_dir=None):
+    def __init__(self,images_dir=None,labels_dir=None,scale=1.0):
         self.images_dir = images_dir
         self.labels_dir = labels_dir
         self.images = {}
@@ -34,11 +34,13 @@ class Dataset:
         
         for f in os.listdir(images_dir):
             print "Loading %s" % f
-            image = cv2.imread(os.path.join(images_dir,f),0)
+            image = cv2.imread(os.path.join(images_dir,f))
+            #image = cv2.resize(image,(image.shape[0],int(np.ceil(scale*image.shape[1]))))
             self.images[f] = image
 
         for f in os.listdir(labels_dir):
             image = cv2.imread(os.path.join(labels_dir,f),0)
+            #image = cv2.resize(image,(image.shape[0],int(np.ceil(scale*image.shape[1]))))
             self.labels[f]=image
         print "Dataset_init done"
         self.rows = self.images['001.png'].shape[0]
